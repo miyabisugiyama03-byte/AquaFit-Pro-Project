@@ -29,20 +29,27 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.usersService.findOne(+id);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(+id, updateUserDto);
   }
 
+  @UseGuards(RolesGuard)
+  @Roles('ADMIN')
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.usersService.remove(+id);
   }
+
   @UseGuards(RolesGuard)
   @Roles('ADMIN')
   @Patch(':id/role')
