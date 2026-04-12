@@ -1,4 +1,10 @@
-import { IsInt, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  IsDateString,
+  Min,
+} from 'class-validator';
 
 export class CreateCourseDto {
   @IsString()
@@ -11,4 +17,7 @@ export class CreateCourseDto {
   @IsInt()
   @Min(1)
   capacity: number;
+
+  @IsDateString()
+  startDate: string;
 }

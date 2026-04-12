@@ -27,6 +27,11 @@ model User {
   createdAt    DateTime @default(now())
 
   courses Course[] @relation("InstructorCourses")
+
+  failedLoginAttempts Int      @default(0)
+  lockedUntil         DateTime?
+  passwordResetTokenHash String?
+  passwordResetExpiresAt DateTime?
 }
 
 model Course {
@@ -35,6 +40,8 @@ model Course {
   description String?
   capacity    Int
   createdAt   DateTime @default(now())
+
+  startDate   DateTime
 
   instructorId Int?
   instructor   User? @relation("InstructorCourses", fields: [instructorId], references: [id])

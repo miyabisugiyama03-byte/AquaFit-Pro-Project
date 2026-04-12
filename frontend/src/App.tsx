@@ -12,6 +12,8 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { NotAuthorized } from './pages/NotAuthorized';
 import { AuthProvider } from './auth/AuthContext';
 import { RequireRole } from './auth/RequireRole';
+import { CreateCourse} from "./pages/CreateCourse.tsx";
+import { EditCourse } from "./pages/EditCourse";
 
 function App() {
   return (
@@ -53,6 +55,24 @@ function App() {
                 }
               />
               <Route path="/not-authorized" element={<NotAuthorized />} />
+
+                <Route
+                    path="/create-course"
+                    element={
+                        <RequireRole roles={['admin', 'instructor']}>
+                            <CreateCourse />
+                        </RequireRole>
+                    }
+                />
+
+                <Route
+                    path="/edit-course/:id"
+                    element={
+                        <RequireRole roles={['admin', 'instructor']}>
+                            <EditCourse />
+                        </RequireRole>
+                    }
+                />
             </Routes>
           </main>
 

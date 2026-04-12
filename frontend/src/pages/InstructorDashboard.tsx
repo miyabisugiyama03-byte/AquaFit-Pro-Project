@@ -1,8 +1,31 @@
+import { useNavigate } from 'react-router-dom';
+
 export function InstructorDashboard() {
-  return (
-    <section className="max-w-6xl mx-auto px-6">
-      <h2 className="text-3xl font-bold text-sky-900">Instructor Dashboard</h2>
-      <p className="mt-3 text-gray-700">Only instructors can access this page. Manage classes, review student attendance, and upload coaching notes.</p>
-    </section>
-  );
+    const navigate = useNavigate();
+
+    return (
+        <div className="p-10 max-w-4xl mx-auto">
+            <h1 className="text-3xl font-bold text-blue-800 mb-6">
+                Instructor Dashboard
+            </h1>
+
+            <div className="grid gap-4">
+
+                <button
+                    onClick={() => navigate('/courses')}
+                    className="p-4 bg-white shadow rounded hover:bg-blue-50"
+                >
+                    View All Courses
+                </button>
+
+                <button
+                    onClick={() => navigate('/create-course')}
+                    className="p-4 bg-green-500 text-white rounded hover:bg-green-600"
+                >
+                    Create New Course
+                </button>
+
+            </div>
+        </div>
+    );
 }
