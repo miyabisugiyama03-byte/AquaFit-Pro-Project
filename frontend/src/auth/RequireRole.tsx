@@ -10,11 +10,20 @@ interface RequireRoleProps {
 }
 
 export function RequireRole({ roles, children }: RequireRoleProps) {
-  const { role } = useAuth();
+  const { role, loading, isAuthenticated } = useAuth();
 
-  if (roles.includes(role)) {
-    return <>{children}</>;
+  if (loading) {
+    return <div>Loading...</div>;
   }
 
-  return <Navigate to="/not-authorized" replace />;
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!roles.includes(role)) {
+    return <Navigate to="/not-authorized" replace />;
+  }
+
+  return <>{children}</>;
 }
