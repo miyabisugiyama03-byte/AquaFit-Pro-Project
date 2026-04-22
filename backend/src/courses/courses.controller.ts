@@ -20,24 +20,28 @@ import { Roles } from '../auth/roles.decorator';
 import { RolesGuard } from '../auth/roles.guard';
 import { AuthenticatedRequest } from '../auth/authenticated-request.interface';
 import { Public } from '../auth/public.decorator';
+import { Role } from '../generated/prisma/enums';
+import { JwtAuthGuard } from '../auth/jwt-auth-guard';
 
 @ApiBearerAuth()
 @Controller('courses')
 export class CoursesController {
   constructor(private readonly coursesService: CoursesService) {}
+
   @Public()
   @Get()
   findAll() {
     return this.coursesService.findAll();
   }
+
   @Public()
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.coursesService.findOne(id);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('INSTRUCTOR', 'ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.INSTRUCTOR)
   @Post()
   create(
     @Body() createCourseDto: CreateCourseDto,
@@ -46,8 +50,8 @@ export class CoursesController {
     return this.coursesService.create(createCourseDto, req.user.userId);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('INSTRUCTOR', 'ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.INSTRUCTOR)
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
@@ -56,8 +60,8 @@ export class CoursesController {
     return this.coursesService.update(id, updateCourseDto);
   }
 
-  @UseGuards(RolesGuard)
-  @Roles('ADMIN')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.coursesService.remove(id);

@@ -7,9 +7,11 @@ import { UsersModule } from './users/users.module';
 import { CoursesModule } from './courses/courses.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { AuthModule } from './auth/auth.module';
+import { BlocksModule } from './blocks/blocks.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './auth/jwt-auth-guard';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+
 
 
 @Module({
@@ -28,6 +30,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
     CoursesModule,
     BookingsModule,
     AuthModule,
+    BlocksModule,
   ],
   controllers: [AppController],
   providers: [

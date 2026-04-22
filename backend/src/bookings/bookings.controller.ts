@@ -1,34 +1,43 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { BookingsService } from './bookings.service';
-import { CreateBookingDto } from './dto/create-booking.dto';
-import { UpdateBookingDto } from './dto/update-booking.dto';
+import {
+  Controller,
+  Post,
+  Param,
+  ParseIntPipe,
+  Req,
+  UseGuards,
+  Get,
+  Delete,
+} from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
+import { BookingsService } from './bookings.service';
+import { JwtAuthGuard } from '../auth/jwt-auth-guard';
+import { AuthenticatedRequest } from '../auth/authenticated-request.interface';
+
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('bookings')
 export class BookingsController {
-  constructor(private readonly bookingsService: BookingsService) {}
+  constructor(private bookingsService: BookingsService) {}
 
-  @Post()
-  create(@Body() createBookingDto: CreateBookingDto) {
-    return this.bookingsService.create(createBookingDto);
+  @Post('course/:courseId')
+  bookCourse(
+    @Param('courseId', ParseIntPipe) courseId: number,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.bookingsService.createBooking(req.user.userId, courseId);
   }
 
-  @Get()
-  findAll() {
-    return this.bookingsService.findAll();
+  @Get('me')
+  getMyBookings(@Req() req: AuthenticatedRequest) {
+    return this.bookingsService.getMyBookings(req.user.userId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.bookingsService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBookingDto: UpdateBookingDto) {
-    return this.bookingsService.update(+id, updateBookingDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.bookingsService.remove(+id);
+  @Delete('course/:courseId')
+  cancel(
+    @Param('courseId', ParseIntPipe) courseId: number,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    return this.bookingsService.cancelBooking(req.user.userId, courseId);
   }
 }

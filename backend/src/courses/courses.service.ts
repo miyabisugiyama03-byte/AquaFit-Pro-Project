@@ -7,17 +7,14 @@ import { UpdateCourseDto } from './dto/update-course.dto';
 export class CoursesService {
   constructor(private prisma: PrismaService) {}
 
-  /**
-   * CREATE COURSE
-   */
   create(dto: CreateCourseDto, instructorId: number) {
     return this.prisma.course.create({
       data: {
         title: dto.title,
         description: dto.description,
         capacity: dto.capacity,
-        startDate: new Date(dto.startDate), // ✅ important
         instructorId,
+        isActive: true,
       },
       include: {
         instructor: {
@@ -27,17 +24,22 @@ export class CoursesService {
             role: true,
           },
         },
+        blocks: {
+          where: {
+            isActive: true,
+          },
+          include: {
+            bookings: true,
+          },
+        },
       },
     });
   }
 
-  /**
-   * GET ALL COURSES
-   */
   findAll() {
     return this.prisma.course.findMany({
-      orderBy: {
-        startDate: 'asc', // ✅ nice improvement
+      where: {
+        isActive: true,
       },
       include: {
         instructor: {
@@ -47,22 +49,47 @@ export class CoursesService {
             role: true,
           },
         },
+        blocks: {
+          where: {
+            isActive: true,
+          },
+          include: {
+            bookings: true,
+          },
+          orderBy: {
+            startDate: 'asc',
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
       },
     });
   }
 
-  /**
-   * GET SINGLE COURSE
-   */
   async findOne(id: number) {
-    const course = await this.prisma.course.findUnique({
-      where: { id },
+    const course = await this.prisma.course.findFirst({
+      where: {
+        id,
+        isActive: true,
+      },
       include: {
         instructor: {
           select: {
             id: true,
             email: true,
             role: true,
+          },
+        },
+        blocks: {
+          where: {
+            isActive: true,
+          },
+          include: {
+            bookings: true,
+          },
+          orderBy: {
+            startDate: 'asc',
           },
         },
       },
@@ -75,19 +102,15 @@ export class CoursesService {
     return course;
   }
 
-  /**
-   * UPDATE COURSE
-   */
   async update(id: number, dto: UpdateCourseDto) {
     await this.findOne(id);
 
     return this.prisma.course.update({
       where: { id },
       data: {
-        ...dto,
-        ...(dto.startDate && {
-          startDate: new Date(dto.startDate), // ✅ safe conversion
-        }),
+        title: dto.title,
+        description: dto.description,
+        capacity: dto.capacity,
       },
       include: {
         instructor: {
@@ -97,18 +120,29 @@ export class CoursesService {
             role: true,
           },
         },
+        blocks: {
+          where: {
+            isActive: true,
+          },
+          include: {
+            bookings: true,
+          },
+          orderBy: {
+            startDate: 'asc',
+          },
+        },
       },
     });
   }
 
-  /**
-   * DELETE COURSE
-   */
   async remove(id: number) {
     await this.findOne(id);
 
-    return this.prisma.course.delete({
+    return this.prisma.course.update({
       where: { id },
+      data: {
+        isActive: false,
+      },
     });
   }
 }
