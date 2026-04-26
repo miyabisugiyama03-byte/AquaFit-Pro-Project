@@ -5,13 +5,11 @@ interface Props {
         title: string;
         description: string;
         capacity: number;
-        startDate: string;
     };
     onSubmit: (data: {
         title: string;
         description: string;
         capacity: number;
-        startDate: string;
     }) => Promise<void>;
 }
 
@@ -19,13 +17,11 @@ export function CourseForm({ initialData, onSubmit }: Props) {
     const [title, setTitle] = useState(initialData?.title || '');
     const [description, setDescription] = useState(initialData?.description || '');
     const [capacity, setCapacity] = useState(initialData?.capacity || 1);
-    const [startDate, setStartDate] = useState(initialData?.startDate || '');
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Basic validation
         if (capacity < 1) {
             alert('Capacity must be at least 1');
             return;
@@ -34,7 +30,7 @@ export function CourseForm({ initialData, onSubmit }: Props) {
         setLoading(true);
 
         try {
-            await onSubmit({ title, description, capacity, startDate });
+            await onSubmit({ title, description, capacity });
         } finally {
             setLoading(false);
         }
@@ -42,8 +38,6 @@ export function CourseForm({ initialData, onSubmit }: Props) {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
-
-            {/* Title */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                     Title
@@ -58,7 +52,6 @@ export function CourseForm({ initialData, onSubmit }: Props) {
                 />
             </div>
 
-            {/* Description */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                     Description
@@ -72,7 +65,6 @@ export function CourseForm({ initialData, onSubmit }: Props) {
                 />
             </div>
 
-            {/* Capacity */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                     Capacity
@@ -94,21 +86,6 @@ export function CourseForm({ initialData, onSubmit }: Props) {
                 </p>
             </div>
 
-            {/* Start Date */}
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Start Date
-                </label>
-                <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full border p-2 rounded"
-                    required
-                />
-            </div>
-
-            {/* Submit */}
             <button
                 type="submit"
                 disabled={loading}
@@ -116,7 +93,6 @@ export function CourseForm({ initialData, onSubmit }: Props) {
             >
                 {loading ? 'Saving...' : 'Save Course'}
             </button>
-
         </form>
     );
 }
