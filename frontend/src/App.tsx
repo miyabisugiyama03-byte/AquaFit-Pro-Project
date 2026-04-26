@@ -15,6 +15,9 @@ import { RequireRole } from './auth/RequireRole';
 import { CreateCourse} from "./pages/CreateCourse.tsx";
 import { EditCourse } from "./pages/EditCourse";
 
+import { CreateBlock } from './pages/CreateBlock';
+
+
 function App() {
   return (
     <AuthProvider>
@@ -29,8 +32,10 @@ function App() {
               <Route path="/booking" element={<Booking />} />
               <Route path="/contact" element={<Contact />} />
               <Route path="/login" element={<Login />} />
+                <Route path="/courses" element={<Courses />} />
+                <Route path="/booking" element={<Booking />} />
 
-              <Route
+                <Route
                 path="/member"
                 element={
                   <RequireRole roles={['member']}>
@@ -70,6 +75,15 @@ function App() {
                     element={
                         <RequireRole roles={['admin', 'instructor']}>
                             <EditCourse />
+                        </RequireRole>
+                    }
+                />
+
+                <Route
+                    path="/create-block"
+                    element={
+                        <RequireRole roles={['admin', 'instructor']}>
+                            <CreateBlock />
                         </RequireRole>
                     }
                 />

@@ -1,20 +1,26 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
-  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { BookingStatus } from '../generated/prisma/client';
+import { BookingStatus } from '../generated/prisma/enums';
 
 @Injectable()
 export class BookingsService {
   constructor(private prisma: PrismaService) {}
 
-  //Create booking (PENDING until payment)
+  // Create booking (PENDING until payment)
   async createBooking(userId: number, blockId: number) {
-    const block = await this.prisma.block.findUnique({
-      where: { id: blockId },
+    const block = await this.prisma.block.findFirst({
+      where: {
+        id: blockId,
+        isActive: true,
+        course: {
+          isActive: true,
+        },
+      },
       include: {
         bookings: true,
         course: true,
@@ -25,28 +31,29 @@ export class BookingsService {
       throw new NotFoundException('Block not found');
     }
 
-    //Prevent booking after course starts
+    // Prevent booking after block starts
     if (block.startDate < new Date()) {
-      throw new BadRequestException('This class has already started');
+      throw new BadRequestException('This block has already started');
     }
 
-    // Prevent duplicate booking
-    const existing = block.bookings.find((b) => b.userId === userId);
+    // Prevent duplicate active booking
+    const existing = block.bookings.find(
+      (b) => b.userId === userId && b.status !== BookingStatus.CANCELLED,
+    );
 
     if (existing) {
-      throw new BadRequestException('You already booked this class');
+      throw new BadRequestException('You already booked this block');
     }
 
     // Only count PAID bookings for capacity
-    const confirmedBookings = block.bookings.filter(
+    const paidBookings = block.bookings.filter(
       (b) => b.status === BookingStatus.PAID,
     );
 
-    if (confirmedBookings.length >= block.course.capacity) {
-      throw new BadRequestException('Class is full');
+    if (paidBookings.length >= block.course.capacity) {
+      throw new BadRequestException('Block is full');
     }
 
-    //Create booking (PENDING)
     return this.prisma.booking.create({
       data: {
         userId,
@@ -56,7 +63,7 @@ export class BookingsService {
     });
   }
 
-  //Confirm booking after payment (you’ll call this later with Stripe)
+  // Confirm booking after payment
   async markAsPaid(bookingId: number) {
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
@@ -74,13 +81,24 @@ export class BookingsService {
       throw new NotFoundException('Booking not found');
     }
 
-    //Check capacity again before confirming
-    const confirmedBookings = booking.block.bookings.filter(
+    if (!booking.block.isActive || !booking.block.course.isActive) {
+      throw new BadRequestException('This booking is no longer valid');
+    }
+
+    if (booking.status === BookingStatus.CANCELLED) {
+      throw new BadRequestException('Cancelled bookings cannot be paid');
+    }
+
+    if (booking.status === BookingStatus.PAID) {
+      return booking;
+    }
+
+    const paidBookings = booking.block.bookings.filter(
       (b) => b.status === BookingStatus.PAID,
     );
 
-    if (confirmedBookings.length >= booking.block.course.capacity) {
-      throw new BadRequestException('Class is full');
+    if (paidBookings.length >= booking.block.course.capacity) {
+      throw new BadRequestException('Block is full');
     }
 
     return this.prisma.booking.update({
@@ -91,7 +109,7 @@ export class BookingsService {
     });
   }
 
-  //Cancel booking
+  // Cancel booking
   async cancelBooking(userId: number, blockId: number) {
     const booking = await this.prisma.booking.findUnique({
       where: {
@@ -109,10 +127,13 @@ export class BookingsService {
       throw new NotFoundException('Booking not found');
     }
 
-    //Prevent cancel after start
+    if (booking.status === BookingStatus.CANCELLED) {
+      throw new BadRequestException('Booking is already cancelled');
+    }
+
     if (booking.block.startDate < new Date()) {
       throw new BadRequestException(
-        'Cannot cancel after the class has started',
+        'Cannot cancel after the block has started',
       );
     }
 
@@ -129,13 +150,16 @@ export class BookingsService {
     });
   }
 
-  //Get current user bookings
+  // Get current user bookings
   async getMyBookings(userId: number) {
     return this.prisma.booking.findMany({
       where: {
         userId,
-        status: {
-          not: BookingStatus.CANCELLED,
+        block: {
+          isActive: true,
+          course: {
+            isActive: true,
+          },
         },
       },
       include: {
@@ -151,14 +175,20 @@ export class BookingsService {
     });
   }
 
-  //Instructor/Admin: view bookings for a block
+  // Instructor/Admin: view bookings for a block
   async getBlockBookings(blockId: number, requesterRole: string) {
     if (requesterRole !== 'ADMIN' && requesterRole !== 'INSTRUCTOR') {
       throw new ForbiddenException('Not allowed');
     }
 
-    const block = await this.prisma.block.findUnique({
-      where: { id: blockId },
+    const block = await this.prisma.block.findFirst({
+      where: {
+        id: blockId,
+        isActive: true,
+        course: {
+          isActive: true,
+        },
+      },
       include: {
         course: true,
         bookings: {
@@ -182,9 +212,9 @@ export class BookingsService {
     return block;
   }
 
-  //clean up expired unpaid bookings
+  // Clean up expired unpaid bookings
   async cleanupExpiredBookings() {
-    const expiryTime = new Date(Date.now() - 15 * 60 * 1000); // 15 mins
+    const expiryTime = new Date(Date.now() - 15 * 60 * 1000);
 
     return this.prisma.booking.updateMany({
       where: {

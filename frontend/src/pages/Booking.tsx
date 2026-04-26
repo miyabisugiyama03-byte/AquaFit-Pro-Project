@@ -1,47 +1,53 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import api from '../api/api'; //axios instance (with token)
-
-interface Course {
-  id: number;
-  title: string;
-}
+import api from '../api/api';
+import type { Course, Block } from '../types/course';
 
 export function Booking() {
   const [searchParams] = useSearchParams();
-  const preCourseId = searchParams.get('courseId');
+  const preBlockId = searchParams.get('blockId');
 
   const [courses, setCourses] = useState<Course[]>([]);
-  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(
-      preCourseId ? Number(preCourseId) : null
+  const [selectedBlockId, setSelectedBlockId] = useState<number | null>(
+      preBlockId ? Number(preBlockId) : null,
   );
   const [status, setStatus] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const flattenedBlocks: Array<{ courseTitle: string; block: Block }> =
+      courses.flatMap((course) =>
+          course.blocks.map((block) => ({
+            courseTitle: course.title,
+            block,
+          })),
+      );
+
   useEffect(() => {
     api.get('/courses')
-        .then(res => setCourses(res.data))
-        .catch(() => setCourses([]));
+        .then((res) => setCourses(res.data))
+        .catch((err) => {
+          console.error(err);
+          setCourses([]);
+        });
   }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedCourseId) {
-      return setStatus('Please select a course');
+    if (!selectedBlockId) {
+      setStatus('Please select a block.');
+      return;
     }
 
     setLoading(true);
+    setStatus(null);
 
     try {
-      await api.post(`/bookings/course/${selectedCourseId}`);
-      setStatus('✅ Booking successful!');
+      await api.post(`/bookings/${selectedBlockId}`);
+      setStatus('Booking successful.');
     } catch (err: any) {
-      if (err.response?.status === 401) {
-        setStatus('❌ You must be logged in');
-      } else {
-        setStatus('❌ Booking failed (maybe full or already booked)');
-      }
+      console.error(err);
+      setStatus(err.response?.data?.message || 'Booking failed.');
     } finally {
       setLoading(false);
     }
@@ -50,43 +56,40 @@ export function Booking() {
   return (
       <section className="max-w-3xl mx-auto px-6">
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-2xl font-bold text-sky-800 mb-4">
-            Book a Course
-          </h2>
+          <h2 className="text-2xl font-bold text-sky-800 mb-4">Book a Block</h2>
 
           <form onSubmit={submit} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700">
-                Course
+                Block
               </label>
               <select
-                  value={selectedCourseId ?? ''}
+                  value={selectedBlockId ?? ''}
                   onChange={(e) =>
-                      setSelectedCourseId(
-                          e.target.value ? Number(e.target.value) : null
-                      )
+                      setSelectedBlockId(e.target.value ? Number(e.target.value) : null)
                   }
                   className="mt-1 block w-full rounded border px-3 py-2"
               >
-                <option value="">Select a course</option>
-                {courses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.title}
+                <option value="">Select a block</option>
+                {flattenedBlocks.map(({ courseTitle, block }) => (
+                    <option key={block.id} value={block.id}>
+                      {courseTitle} — {block.dayOfWeek} {block.time} (
+                      {new Date(block.startDate).toLocaleDateString()} -{' '}
+                      {new Date(block.endDate).toLocaleDateString()})
                     </option>
                 ))}
               </select>
             </div>
 
-            <button
-                disabled={loading}
-                className="px-4 py-2 rounded bg-gradient-to-r from-teal-500 to-sky-600 text-white font-semibold"
-            >
-              {loading ? 'Booking...' : 'Confirm Booking'}
-            </button>
-
-            {status && (
-                <div className="text-sm text-gray-700">{status}</div>
-            )}
+            <div className="flex items-center gap-4">
+              <button
+                  disabled={loading}
+                  className="px-4 py-2 rounded bg-gradient-to-r from-teal-500 to-sky-600 text-white font-semibold"
+              >
+                {loading ? 'Booking...' : 'Confirm Booking'}
+              </button>
+              {status && <div className="text-sm text-gray-700">{status}</div>}
+            </div>
           </form>
         </div>
       </section>
