@@ -4,9 +4,16 @@ import api from '../api/api';
 
 type Role = 'guest' | 'member' | 'instructor' | 'admin';
 
+export interface UserInfo {
+  id: number;
+  email: string;
+  role: Role;
+}
+
 interface AuthContextValue {
   role: Role;
   setRole: (role: Role) => void;
+  user: UserInfo | null;
   isAuthenticated: boolean;
   logout: () => void;
   loading: boolean;
@@ -16,6 +23,7 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role>('guest');
+  const [user, setUser] = useState<UserInfo | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,11 +37,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       try {
         const res = await api.get('/auth/me');
-        const user = res.data;
-        setRole(user.role.toLowerCase());
+        const fetchedUser = res.data;
+        const normalizedRole = fetchedUser.role.toLowerCase() as Role;
+        setRole(normalizedRole);
+        setUser({
+          id: fetchedUser.id,
+          email: fetchedUser.email,
+          role: normalizedRole,
+        });
       } catch {
         localStorage.removeItem('token');
         setRole('guest');
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -46,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.removeItem('token');
     setRole('guest');
+    setUser(null);
   };
 
   return (
@@ -53,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           value={{
             role,
             setRole,
+            user,
             isAuthenticated: role !== 'guest',
             logout,
             loading,
