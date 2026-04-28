@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import api from '../api/api';
@@ -11,7 +11,7 @@ export function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError('');
 
@@ -22,65 +22,104 @@ export function Login() {
       });
 
       const { access_token, user } = res.data;
-
-      //Save JWT
       localStorage.setItem('token', access_token);
 
-      //Set role from backend
       const role = user.role.toLowerCase();
       setRole(role);
 
-      //Redirect based on role
       if (role === 'admin') navigate('/admin');
       else if (role === 'instructor') navigate('/instructor');
       else navigate('/member');
-
     } catch (err: any) {
       console.error(err);
-      setError('Invalid email or password');
+      setError('Invalid email or password. Please try again.');
     }
   };
 
   return (
-      <section className="max-w-md mx-auto mt-8 p-6 border border-slate-200 rounded-xl bg-white shadow">
-        <h1 className="text-2xl font-bold text-sky-700 mb-4">Login</h1>
+    <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 px-6 py-12 text-slate-100">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
+        <div className="lg:w-1/2">
+          <div className="inline-flex rounded-full bg-cyan-600/15 px-4 py-1 text-sm font-semibold uppercase tracking-[0.3em] text-cyan-300">
+            AquaFit Pro login
+          </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <label className="block text-sm font-medium text-gray-700">
-            Email
-            <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full border border-slate-300 rounded p-2"
-            />
-          </label>
+          <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl">
+            Secure access for swimmers, instructors, and pool staff.
+          </h1>
 
-          <label className="block text-sm font-medium text-gray-700">
-            Password
-            <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 w-full border border-slate-300 rounded p-2"
-            />
-          </label>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
+            Sign in to manage your training schedule, book swim sessions, and keep your membership details up to date. AquaFit Pro makes pool fitness simple, secure, and beautifully designed.
+          </p>
 
+          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6 shadow-xl shadow-black/10">
+              <p className="text-xs uppercase tracking-[0.26em] text-cyan-300">For members</p>
+              <p className="mt-4 text-lg font-semibold text-white">View classes, manage bookings, and stay on track.</p>
+            </div>
+            <div className="rounded-[1.75rem] border border-white/10 bg-white/5 p-6 shadow-xl shadow-black/10">
+              <p className="text-xs uppercase tracking-[0.26em] text-cyan-300">For instructors</p>
+              <p className="mt-4 text-lg font-semibold text-white">Access client sessions, schedules, and coaching tools.</p>
+            </div>
+          </div>
+        </div>
 
+        <div className="lg:w-[45%]">
+          <div className="overflow-hidden rounded-[2rem] border border-slate-800 bg-slate-950/95 shadow-2xl ring-1 ring-white/10">
+            <div className="bg-slate-900/95 px-8 py-8 sm:px-10">
+              <p className="text-sm uppercase tracking-[0.28em] text-cyan-400">Account access</p>
+              <h2 className="mt-3 text-3xl font-semibold text-white">Sign in to your AquaFit account</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-400">Enter your credentials to continue to the pool dashboard.</p>
+            </div>
 
-          {error && (
-              <p className="text-red-500 text-sm">{error}</p>
-          )}
+            <form onSubmit={handleSubmit} className="space-y-6 px-8 py-8 sm:px-10">
+              <div>
+                <label className="block text-sm font-semibold text-slate-200">Email address</label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-3 block w-full rounded-3xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
+                  placeholder="you@example.com"
+                />
+              </div>
 
-          <button
-              type="submit"
-              className="w-full bg-sky-600 text-white py-2 rounded font-semibold hover:bg-sky-700"
-          >
-            Log in
-          </button>
-        </form>
-      </section>
+              <div>
+                <div className="flex items-center justify-between gap-4">
+                  <label className="text-sm font-semibold text-slate-200">Password</label>
+                  <span className="text-sm text-slate-500">Minimum 8 characters</span>
+                </div>
+                <input
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-3 block w-full rounded-3xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none transition focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20"
+                  placeholder="Enter your password"
+                />
+              </div>
+
+              {error ? (
+                <div className="rounded-3xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+                  {error}
+                </div>
+              ) : null}
+
+              <button
+                type="submit"
+                className="flex w-full items-center justify-center rounded-full bg-gradient-to-r from-sky-600 to-cyan-500 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition hover:opacity-95"
+              >
+                Sign in
+              </button>
+
+              <p className="text-center text-sm text-slate-500">
+                New to AquaFit? <span className="font-semibold text-white">Contact us</span> to start your membership.
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }
