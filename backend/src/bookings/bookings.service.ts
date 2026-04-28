@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -11,7 +10,6 @@ import { BookingStatus } from '../generated/prisma/enums';
 export class BookingsService {
   constructor(private prisma: PrismaService) {}
 
-  // Create booking (PENDING until payment)
   async createBooking(userId: number, blockId: number) {
     const block = await this.prisma.block.findFirst({
       where: {
@@ -31,27 +29,39 @@ export class BookingsService {
       throw new NotFoundException('Block not found');
     }
 
-    // Prevent booking after block starts
     if (block.startDate < new Date()) {
       throw new BadRequestException('This block has already started');
     }
 
-    // Prevent duplicate active booking
-    const existing = block.bookings.find(
-      (b) => b.userId === userId && b.status !== BookingStatus.CANCELLED,
+    const existingBooking = block.bookings.find(
+      (booking) => booking.userId === userId,
     );
 
-    if (existing) {
+    if (existingBooking && existingBooking.status !== BookingStatus.CANCELLED) {
       throw new BadRequestException('You already booked this block');
     }
 
-    // Only count PAID bookings for capacity
     const paidBookings = block.bookings.filter(
-      (b) => b.status === BookingStatus.PAID,
+      (booking) => booking.status === BookingStatus.PAID,
     );
 
     if (paidBookings.length >= block.course.capacity) {
       throw new BadRequestException('Block is full');
+    }
+
+    if (existingBooking && existingBooking.status === BookingStatus.CANCELLED) {
+      return this.prisma.booking.update({
+        where: {
+          userId_blockId: {
+            userId,
+            blockId,
+          },
+        },
+        data: {
+          status: BookingStatus.PENDING,
+          createdAt: new Date(),
+        },
+      });
     }
 
     return this.prisma.booking.create({
@@ -63,7 +73,6 @@ export class BookingsService {
     });
   }
 
-  // Confirm booking after payment
   async markAsPaid(bookingId: number) {
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
@@ -94,7 +103,7 @@ export class BookingsService {
     }
 
     const paidBookings = booking.block.bookings.filter(
-      (b) => b.status === BookingStatus.PAID,
+      (blockBooking) => blockBooking.status === BookingStatus.PAID,
     );
 
     if (paidBookings.length >= booking.block.course.capacity) {
@@ -109,7 +118,6 @@ export class BookingsService {
     });
   }
 
-  // Cancel booking
   async cancelBooking(userId: number, blockId: number) {
     const booking = await this.prisma.booking.findUnique({
       where: {
@@ -150,11 +158,13 @@ export class BookingsService {
     });
   }
 
-  // Get current user bookings
   async getMyBookings(userId: number) {
     return this.prisma.booking.findMany({
       where: {
         userId,
+        status: {
+          not: BookingStatus.CANCELLED,
+        },
         block: {
           isActive: true,
           course: {
@@ -175,44 +185,6 @@ export class BookingsService {
     });
   }
 
-  // Instructor/Admin: view bookings for a block
-  async getBlockBookings(blockId: number, requesterRole: string) {
-    if (requesterRole !== 'ADMIN' && requesterRole !== 'INSTRUCTOR') {
-      throw new ForbiddenException('Not allowed');
-    }
-
-    const block = await this.prisma.block.findFirst({
-      where: {
-        id: blockId,
-        isActive: true,
-        course: {
-          isActive: true,
-        },
-      },
-      include: {
-        course: true,
-        bookings: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                email: true,
-                role: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!block) {
-      throw new NotFoundException('Block not found');
-    }
-
-    return block;
-  }
-
-  // Clean up expired unpaid bookings
   async cleanupExpiredBookings() {
     const expiryTime = new Date(Date.now() - 15 * 60 * 1000);
 

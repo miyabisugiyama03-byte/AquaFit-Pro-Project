@@ -1,12 +1,23 @@
 import { useEffect, useState } from 'react';
 import api from '../api/api';
 import type { MyBooking } from '../types/booking';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 
 export function MemberDashboard() {
     const [bookings, setBookings] = useState<MyBooking[]>([]);
     const [loadingBookings, setLoadingBookings] = useState(true);
     const [bookingStatus, setBookingStatus] = useState<string | null>(null);
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        if (searchParams.get('payment') === 'success') {
+            setBookingStatus('Payment successful.');
+        }
+
+        if (searchParams.get('payment') === 'cancelled') {
+            setBookingStatus('Payment cancelled.');
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         api.get('/bookings/me')
@@ -20,6 +31,21 @@ export function MemberDashboard() {
                 setLoadingBookings(false);
             });
     }, []);
+
+    const handlePayNow = async (bookingId: number) => {
+        try {
+            const res = await api.post(`/payments/checkout/${bookingId}`);
+
+            if (res.data.url) {
+                window.location.assign(res.data.url);
+            }
+        } catch (err: any) {
+            console.error(err);
+            setBookingStatus(
+                err.response?.data?.message || 'Failed to start payment.',
+            );
+        }
+    };
 
     const handleCancelBooking = async (blockId: number) => {
         if (!confirm('Cancel this booking?')) return;
@@ -45,6 +71,7 @@ export function MemberDashboard() {
     return (
         <section className="max-w-6xl mx-auto px-6 py-8">
             <h2 className="text-3xl font-bold text-sky-900">Member Dashboard</h2>
+
             <p className="mt-3 text-gray-700">
                 Only members can access this page. Here you can track your booked
                 sessions, view personal progress, and manage your membership profile.
@@ -86,27 +113,41 @@ export function MemberDashboard() {
                                         <h4 className="text-lg font-semibold text-gray-800">
                                             {booking.block.course.title}
                                         </h4>
+
                                         <p className="text-sm text-gray-600">
                                             {booking.block.dayOfWeek} at {booking.block.time}
                                         </p>
+
                                         <p className="text-sm text-gray-600">
                                             {new Date(booking.block.startDate).toLocaleDateString()} -{' '}
                                             {new Date(booking.block.endDate).toLocaleDateString()}
                                         </p>
+
                                         <p className="text-sm text-gray-600 mt-1">
                                             Status:{' '}
                                             <span className="font-medium">{booking.status}</span>
                                         </p>
                                     </div>
 
-                                    {booking.status !== 'CANCELLED' && (
-                                        <button
-                                            onClick={() => handleCancelBooking(booking.block.id)}
-                                            className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
-                                        >
-                                            Cancel
-                                        </button>
-                                    )}
+                                    <div className="flex gap-2">
+                                        {booking.status === 'PENDING' && (
+                                            <button
+                                                onClick={() => handlePayNow(booking.id)}
+                                                className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                                            >
+                                                Pay Now
+                                            </button>
+                                        )}
+
+                                        {booking.status !== 'CANCELLED' && (
+                                            <button
+                                                onClick={() => handleCancelBooking(booking.block.id)}
+                                                className="px-3 py-1 bg-red-500 text-white text-sm rounded hover:bg-red-600"
+                                            >
+                                                Cancel
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         ))}
