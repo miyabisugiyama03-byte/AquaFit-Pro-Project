@@ -30,6 +30,10 @@ export default function Header() {
               Courses
             </Link>
 
+            <Link to="/opening-hours" className="text-sm font-medium hover:text-blue-600">
+              Opening Hours
+            </Link>
+
             <Link to="/contact" className="text-sm font-medium hover:text-blue-600">
               Contact
             </Link>
@@ -46,9 +50,6 @@ export default function Header() {
                   <Link to="/instructor" className="text-sm font-medium hover:text-blue-600">
                     Instructor Dashboard
                   </Link>
-                  <Link to="/create-block" className="text-sm font-medium hover:text-blue-600">
-                    Create Block
-                  </Link>
                 </>
             )}
 
@@ -56,9 +57,6 @@ export default function Header() {
                 <>
                   <Link to="/admin" className="text-sm font-medium hover:text-blue-600">
                     Admin Dashboard
-                  </Link>
-                  <Link to="/create-block" className="text-sm font-medium hover:text-blue-600">
-                    Create Block
                   </Link>
                 </>
             )}
@@ -76,6 +74,22 @@ export default function Header() {
                   Logout
                 </button>
             )}
+
+            {!isAuthenticated && (
+                <Link to="/register" className="text-sm font-medium hover:text-blue-600">
+                  Register
+                </Link>
+            )}
+
+            <Link to="/about" className="text-sm font-medium hover:text-blue-600">
+              About
+            </Link>
+
+            <Link to="/featured-video" className="text-sm font-medium hover:text-blue-600">
+              Video
+            </Link>
+
+
           </nav>
         </div>
       </header>
