@@ -14,9 +14,11 @@ import { AuthProvider } from './auth/AuthContext';
 import { RequireRole } from './auth/RequireRole';
 import { CreateCourse} from "./pages/CreateCourse.tsx";
 import { EditCourse } from "./pages/EditCourse";
-
 import { CreateBlock } from './pages/CreateBlock';
-
+import { Register } from './pages/Register';
+import { OpeningHours } from './pages/OpeningHours';
+import { About } from './pages/About';
+import { FeaturedVideo } from './pages/FeaturedVideo';
 
 function App() {
   return (
@@ -34,6 +36,10 @@ function App() {
               <Route path="/login" element={<Login />} />
                 <Route path="/courses" element={<Courses />} />
                 <Route path="/booking" element={<Booking />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/opening-hours" element={<OpeningHours />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/featured-video" element={<FeaturedVideo />} />
 
                 <Route
                 path="/member"
