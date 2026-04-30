@@ -3,10 +3,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../api/api';
 import { CourseForm } from '../components/CourseForm';
 
+interface CourseFormData {
+    title: string;
+    description: string;
+    capacity: number;
+}
+
 export function EditCourse() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [course, setCourse] = useState<any>(null);
+    const [course, setCourse] = useState<CourseFormData | null>(null);
 
     useEffect(() => {
         api.get(`/courses/${id}`).then((res) => {
@@ -14,19 +20,18 @@ export function EditCourse() {
 
             setCourse({
                 title: c.title,
-                description: c.description,
+                description: c.description || '',
                 capacity: c.capacity,
-                startDate: c.startDate.split('T')[0],
             });
         });
     }, [id]);
 
-    const handleUpdate = async (data: any) => {
+    const handleUpdate = async (data: CourseFormData) => {
         await api.patch(`/courses/${id}`, data);
         navigate('/courses');
     };
 
-    if (!course) return <div>Loading...</div>;
+    if (!course) return <div className="p-10">Loading...</div>;
 
     return (
         <div className="max-w-md mx-auto mt-10">
