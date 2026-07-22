@@ -103,6 +103,7 @@ export class AuthService {
         email: true,
         role: true,
         createdAt: true,
+        creditBalanceCents: true,
       },
     });
   }

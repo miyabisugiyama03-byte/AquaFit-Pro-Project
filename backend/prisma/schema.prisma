@@ -19,12 +19,26 @@ enum BookingStatus {
   CANCELLED
 }
 
+enum SkillLevel {
+  BEGINNER
+  IMPROVER
+  DEVELOPMENT
+  ADVANCED
+}
+
+enum SessionsPerWeek {
+  ONE
+  TWO
+}
+
 model User {
   id           Int      @id @default(autoincrement())
   email        String   @unique
   passwordHash String
   role         Role     @default(MEMBER)
   createdAt    DateTime @default(now())
+
+  creditBalanceCents Int @default(0)
 
   courses Course[] @relation("InstructorCourses")
 
@@ -61,6 +75,9 @@ model Block {
   dayOfWeek String
   time      String
   isActive Boolean @default(true)
+
+  skillLevel      SkillLevel      @default(BEGINNER)
+  sessionsPerWeek SessionsPerWeek @default(ONE)
 
   bookings  Booking[]
 }

@@ -36,4 +36,29 @@ export class UsersService {
       select: { id: true, email: true, role: true, createdAt: true },
     });
   }
+
+  async addCredit(userId: number, amountCents: number) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID #${userId} not found`);
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        creditBalanceCents: {
+          increment: amountCents,
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        creditBalanceCents: true,
+      },
+    });
+  }
 }

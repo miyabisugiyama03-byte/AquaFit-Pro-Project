@@ -8,6 +8,8 @@ export interface MyBooking {
         endDate: string;
         dayOfWeek: string;
         time: string;
+        sessionsPerWeek: string;
+
         course: {
             id: number;
             title: string;

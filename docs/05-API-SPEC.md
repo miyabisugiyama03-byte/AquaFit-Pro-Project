@@ -4,40 +4,70 @@
 **Authentication:** Bearer Token (JWT) required for protected endpoints.
 
 ---
+## Authentication
+
+| Method | Endpoint         | Access        | Description                              |
+| ------ | ---------------- | ------------- | ---------------------------------------- |
+| POST   | `/auth/register` | Public        | Register a new member account.           |
+| POST   | `/auth/login`    | Public        | Authenticate user and return JWT token.  |
+| GET    | `/auth/me`       | Authenticated | Return currently logged-in user details. |
+
+---
 
 ## Courses 
-*The core product: structured swimming blocks.*
 
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| **GET** | `/courses` | **Public** | List all upcoming course blocks. |
-| **GET** | `/courses/:id` | **Public** | Get details for a specific block. |
-| **POST** | `/courses` | `ADMIN` | Create a new 6-week block. |
-| **PATCH** | `/courses/:id` | `ADMIN` | Update time or instructor. |
-| **DELETE** | `/courses/:id` | `ADMIN` | Soft delete a course. |
+
+| Method | Endpoint       | Access             | Description                                 |
+| ------ | -------------- | ------------------ | ------------------------------------------- |
+| GET    | `/courses`     | Public             | List all active courses and related blocks. |
+| GET    | `/courses/:id` | Public             | Get details for a specific course.          |
+| POST   | `/courses`     | Admin / Instructor | Create a new course.                        |
+| PATCH  | `/courses/:id` | Admin / Instructor | Update course details.                      |
+| DELETE | `/courses/:id` | Admin / Instructor | Soft delete or deactivate a course.         |
 
 ---
 
 ## Bookings
-*Handling reservations and payments.*
 
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| **POST** | `/bookings` | `PERSONAL` | Book a spot (Self or Dependent). |
-| **GET** | `/bookings/my-bookings` | `PERSONAL` | View current and past bookings. |
-| **DELETE** | `/bookings/:id` | `PERSONAL` | Cancel a booking (Refund logic applies). |
+| Method | Endpoint                   | Access             | Description                          |
+| ------ | -------------------------- | ------------------ | ------------------------------------ |
+| POST   | `/bookings/:blockId`       | Member             | Create a booking for a course block. |
+| GET    | `/bookings/me`             | Member             | View current user bookings.          |
+| DELETE | `/bookings/:blockId`       | Member             | Cancel a booking for a block.        |
+| GET    | `/bookings/block/:blockId` | Admin / Instructor | View bookings for a specific block.  |
 
 ---
 
-## Users & Auth
-*Managing accounts for Personal users, Instructors, and Admins.*
+## Blocks
 
-| Method | Endpoint | Access | Description |
-| :--- | :--- | :--- | :--- |
-| **POST** | `/users/register` | **Public** | Create a new Personal account. |
-| **POST** | `/users/login` | **Public** | Exchange credentials for JWT. |
-| **GET** | `/users/profile` | `Private` | Get current user details & credit balance. |
-| **GET** | `/users/:id/swimmers` | `PERSONAL` | List swimmers managed by this account. |
+| Method | Endpoint                   | Access             | Description                                 |
+| ------ | -------------------------- | ------------------ | ------------------------------------------- |
+| GET    | `/blocks`                  | Public             | List all active course blocks.              |
+| GET    | `/blocks/:id`              | Public             | Get details for a specific block.           |
+| GET    | `/blocks/course/:courseId` | Public             | List blocks belonging to a specific course. |
+| POST   | `/blocks`                  | Admin / Instructor | Create a new scheduled block.               |
+| PATCH  | `/blocks/:id`              | Admin / Instructor | Update block schedule or details.           |
+| DELETE | `/blocks/:id`              | Admin / Instructor | Soft delete or deactivate a block.          |
+
+---
+
+## Users
+
+| Method | Endpoint            | Access | Description                     |
+| ------ | ------------------- | ------ | ------------------------------- |
+| GET    | `/users`            | Admin  | List all users.                 |
+| PATCH  | `/users/:id/role`   | Admin  | Update a user role.             |
+| PATCH  | `/users/:id/credit` | Admin  | Add credit to a member account. |
+
+
+---
+
+## Payments
+
+| Method | Endpoint                        | Access | Description                                              |
+| ------ | ------------------------------- | ------ | -------------------------------------------------------- |
+| POST   | `/payments/checkout/:bookingId` | Member | Create a Stripe checkout session.                        |
+| POST   | `/payments/webhook`             | Stripe | Receive Stripe webhook events and update booking status. |
 
 ---
 

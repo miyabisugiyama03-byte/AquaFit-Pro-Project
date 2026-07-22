@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Block } from '../generated/prisma/client';
+import { SessionsPerWeek, SkillLevel } from '../generated/prisma/enums';
 import { CreateBlockDto } from './dto/create-block.dto';
 import { UpdateBlockDto } from './dto/update-block.dto';
 
@@ -38,6 +39,8 @@ export class BlocksService {
         endDate,
         dayOfWeek: dto.dayOfWeek,
         time: dto.time,
+        skillLevel: dto.skillLevel,
+        sessionsPerWeek: dto.sessionsPerWeek,
         isActive: true,
       },
       include: {
@@ -163,6 +166,8 @@ export class BlocksService {
       endDate?: Date;
       dayOfWeek?: string;
       time?: string;
+      skillLevel?: SkillLevel;
+      sessionsPerWeek?: SessionsPerWeek;
     } = {};
 
     if (dto.courseId !== undefined) {
@@ -184,6 +189,10 @@ export class BlocksService {
     if (dto.endDate) data.endDate = new Date(dto.endDate);
     if (dto.dayOfWeek !== undefined) data.dayOfWeek = dto.dayOfWeek;
     if (dto.time !== undefined) data.time = dto.time;
+    if (dto.skillLevel !== undefined) data.skillLevel = dto.skillLevel;
+    if (dto.sessionsPerWeek !== undefined) {
+      data.sessionsPerWeek = dto.sessionsPerWeek;
+    }
 
     const finalStart = data.startDate ?? current.startDate;
     const finalEnd = data.endDate ?? current.endDate;

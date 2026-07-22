@@ -1,10 +1,16 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import StripeConstructor from 'stripe';
 
 import { PrismaService } from '../prisma/prisma.service';
 import { BookingsService } from '../bookings/bookings.service';
 import { Prisma } from '../generated/prisma/client';
+import { BookingStatus } from '../generated/prisma/enums';
+import { calculateBlockPriceCents } from './pricing';
 
 type StripeClient = InstanceType<typeof StripeConstructor>;
 
@@ -21,6 +27,7 @@ type BookingForCheckout = Prisma.BookingGetPayload<{
 interface StripeCheckoutSessionMetadata {
   metadata?: {
     bookingId?: string;
+    creditToApplyCents?: string;
   } | null;
 }
 
@@ -75,8 +82,57 @@ export class PaymentsService {
       throw new NotFoundException('Booking not found');
     }
 
+    if (booking.status === BookingStatus.PAID) {
+      throw new BadRequestException('Booking is already paid');
+    }
+
+    if (booking.status === BookingStatus.CANCELLED) {
+      throw new BadRequestException('Cancelled bookings cannot be paid');
+    }
+
     const frontendUrl =
       this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:5173';
+
+    const fullPriceCents = calculateBlockPriceCents(
+      booking.block.startDate,
+      booking.block.endDate,
+      booking.block.sessionsPerWeek,
+    );
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        creditBalanceCents: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const creditToApplyCents = Math.min(
+      user.creditBalanceCents,
+      fullPriceCents,
+    );
+
+    const amountDueCents = fullPriceCents - creditToApplyCents;
+
+    if (amountDueCents === 0) {
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          creditBalanceCents: {
+            decrement: creditToApplyCents,
+          },
+        },
+      });
+
+      await this.bookingsService.markAsPaid(booking.id);
+
+      return {
+        url: `${frontendUrl}/member?payment=success`,
+      };
+    }
 
     const session = await this.stripe.checkout.sessions.create({
       mode: 'payment',
@@ -86,7 +142,7 @@ export class PaymentsService {
           quantity: 1,
           price_data: {
             currency: 'eur',
-            unit_amount: 1500,
+            unit_amount: amountDueCents,
             product_data: {
               name: booking.block.course.title,
               description: `${booking.block.dayOfWeek} at ${booking.block.time}`,
@@ -96,6 +152,7 @@ export class PaymentsService {
       ],
       metadata: {
         bookingId: booking.id.toString(),
+        creditToApplyCents: creditToApplyCents.toString(),
       },
       success_url: `${frontendUrl}/member?payment=success`,
       cancel_url: `${frontendUrl}/member?payment=cancelled`,
@@ -131,9 +188,33 @@ export class PaymentsService {
 
       const bookingId = Number(sessionData.metadata?.bookingId);
 
-      if (bookingId) {
-        await this.bookingsService.markAsPaid(bookingId);
+      if (!bookingId) {
+        return { received: true };
       }
+
+      const creditToApplyCents = Number(
+        sessionData.metadata?.creditToApplyCents ?? 0,
+      );
+
+      const booking = await this.prisma.booking.findUnique({
+        where: { id: bookingId },
+        select: {
+          userId: true,
+        },
+      });
+
+      if (booking && creditToApplyCents > 0) {
+        await this.prisma.user.update({
+          where: { id: booking.userId },
+          data: {
+            creditBalanceCents: {
+              decrement: creditToApplyCents,
+            },
+          },
+        });
+      }
+
+      await this.bookingsService.markAsPaid(bookingId);
     }
 
     return { received: true };
