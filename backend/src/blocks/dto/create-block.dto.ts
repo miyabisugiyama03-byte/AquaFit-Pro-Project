@@ -1,4 +1,5 @@
-import { IsDateString, IsInt, IsString, Min } from 'class-validator';
+import { IsDateString, IsEnum, IsInt, IsString, Min } from 'class-validator';
+import { SessionsPerWeek, SkillLevel } from '../../generated/prisma/enums';
 
 export class CreateBlockDto {
   @IsInt()
@@ -16,4 +17,10 @@ export class CreateBlockDto {
 
   @IsString()
   time: string;
+
+  @IsEnum(SkillLevel)
+  skillLevel: SkillLevel;
+
+  @IsEnum(SessionsPerWeek)
+  sessionsPerWeek: SessionsPerWeek;
 }

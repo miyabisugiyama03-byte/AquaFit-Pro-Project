@@ -1,3 +1,6 @@
+export type SkillLevel = 'BEGINNER' | 'IMPROVER' | 'DEVELOPMENT' | 'ADVANCED';
+export type SessionsPerWeek = 'ONE' | 'TWO';
+
 export interface BookingSummary {
     id: number;
     userId: number;
@@ -13,6 +16,8 @@ export interface Block {
     endDate: string;
     dayOfWeek: string;
     time: string;
+    skillLevel: SkillLevel;
+    sessionsPerWeek: SessionsPerWeek;
     isActive?: boolean;
     bookings?: BookingSummary[];
 }

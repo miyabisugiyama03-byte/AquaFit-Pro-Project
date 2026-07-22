@@ -18,6 +18,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Role } from '../generated/prisma/enums';
 import { JwtAuthGuard } from '../auth/jwt-auth-guard';
+import { AddCreditDto } from './dto/add-credit.dto';
 
 @ApiBearerAuth()
 @Controller('users')
@@ -57,5 +58,12 @@ export class UsersController {
   @Patch(':id/role')
   setRole(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateRoleDto) {
     return this.usersService.setRole(id, dto.role);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  @Patch(':id/credit')
+  addCredit(@Param('id', ParseIntPipe) id: number, @Body() dto: AddCreditDto) {
+    return this.usersService.addCredit(id, dto.amountCents);
   }
 }
