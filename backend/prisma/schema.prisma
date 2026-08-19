@@ -31,6 +31,13 @@ enum SessionsPerWeek {
   TWO
 }
 
+enum EnquiryStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+
 model User {
   id           Int      @id @default(autoincrement())
   email        String   @unique
@@ -48,6 +55,10 @@ model User {
   passwordResetExpiresAt    DateTime?
 
   bookings Booking[]
+
+
+  enquiries Enquiry[]
+  enquiryMessages  EnquiryMessage[]
 }
 
 model Course {
@@ -95,4 +106,35 @@ model Booking {
   block Block @relation(fields: [blockId], references: [id], onDelete: Cascade)
 
   @@unique([userId, blockId])
+}
+
+model Enquiry {
+  id        Int             @id @default(autoincrement())
+
+  subject   String
+
+  status    EnquiryStatus   @default(OPEN)
+
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  closedAt  DateTime?
+
+  userId    Int
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  messages  EnquiryMessage[]
+}
+
+model EnquiryMessage {
+  id        Int      @id @default(autoincrement())
+
+  message   String
+
+  createdAt DateTime @default(now())
+
+  enquiryId Int
+  enquiry   Enquiry  @relation(fields: [enquiryId], references: [id], onDelete: Cascade)
+
+  senderId  Int
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
 }

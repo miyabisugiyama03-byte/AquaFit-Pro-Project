@@ -1,11 +1,8 @@
-import { Request } from 'express';
-
-export interface JwtUser {
-  userId: number;
-  email: string;
-  role: string;
-}
+import { Role } from '../generated/prisma/enums';
 
 export interface AuthenticatedRequest extends Request {
-  user: JwtUser; // ❗ remove optional (no ?)
+  user: {
+    userId: number;
+    role: Role;
+  };
 }

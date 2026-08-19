@@ -13,6 +13,7 @@ import { JwtAuthGuard } from './auth/jwt-auth-guard';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { PaymentsModule } from './payments/payments.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EnquiriesModule } from './enquiries/enquiries.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     BlocksModule,
     PaymentsModule,
     ScheduleModule.forRoot(),
+    EnquiriesModule,
   ],
   controllers: [AppController],
   providers: [
